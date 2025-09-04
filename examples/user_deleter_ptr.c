@@ -40,8 +40,7 @@ void c_string_free(c_string *cstr)
 
 void value_deleter(void *v)
 {
-    c_string *cstr = *((c_string **)v);
-    c_string_free(cstr);
+    PTR_DELETER(c_string *, c_string_free, v);
 }
 
 int main(int argc, char *argv[])

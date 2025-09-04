@@ -23,6 +23,9 @@ extern "C" {
  */
 typedef struct _map map;
 
+#define PTR_DELETER(type,func,p) do { type del = *((type *)p); func(del); } while(0)
+#define DELETER(type,func,p) do { type del = *((type *)p); func(&del); } while(0)
+
 /**
  * Итератор для обхода элементов контейнера map
  * 

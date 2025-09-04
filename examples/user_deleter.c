@@ -31,13 +31,13 @@ void darray_construct(darray *darr, size_t elem_size, size_t size)
 
 void darray_destroy(darray *darr)
 {
+    printf("УСПЕШНО ОЧИЩЕНО %p - %lu\n", darr->data, darr->size);
     free(darr->data);
-}                                       
+}   
 
-void value_deleter(void *v)
+void value_deleter(void *p)
 {
-    darray darr = *((darray *)v);
-    darray_destroy(&darr);
+    DELETER(darray, darray_destroy, p);
 }
 
 int main(int argc, char *argv[])

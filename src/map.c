@@ -1183,12 +1183,12 @@ map_free_helper
         map_free_helper(mp, node->right_child);
     }
 
-    if (mp->key_destroyer != NULL) {
+    if (mp->key_destroyer != NULL && mp->key_destroyer != free) {
         mp->key_destroyer(node->key);                
     }
     free(node->key);
 
-    if (mp->value_destroyer != NULL) {
+    if (mp->value_destroyer != NULL && mp->value_destroyer != free) {
         mp->value_destroyer(node->value);
     }
     free(node->value);
