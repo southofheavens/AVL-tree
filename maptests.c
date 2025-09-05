@@ -201,6 +201,92 @@ C_TEST(insert_small_rotates_test)
 
     ASSERT_EQ(root->left_child->parent, root);
     ASSERT_EQ(root->left_child->right_child->parent, root->left_child);
+
+    map_free(mp);
+}
+
+C_TEST(iterator_test)
+{
+    map *mp = map_create(sizeof(int), sizeof(int), int_compare_func, NULL, NULL);
+
+    ASSERT_EQ_CMP(map_iterator_first(mp), map_iterator_end(mp), map_iterator_compare);
+    ASSERT_EQ_CMP(map_iterator_last(mp), map_iterator_end(mp), map_iterator_compare);
+    ASSERT_EQ_CMP(map_iterator_end(mp), map_iterator_end(mp), map_iterator_compare);
+
+    
+    int key, value;
+
+    key = 5, value = 5;
+    map_insert(mp, key, value);
+
+    map_iterator it;
+    it = map_iterator_first(mp);
+    ASSERT_EQ_CMP(it, map_iterator_first(mp), map_iterator_compare);
+    ASSERT_EQ_CMP(it, map_iterator_last(mp), map_iterator_compare);
+
+    key = 10, value = 10;
+    map_insert(mp, key, value);
+
+    map_iterator_next(mp, it);
+    ASSERT_NE_CMP(it, map_iterator_first(mp), map_iterator_compare);
+    ASSERT_EQ_CMP(it, map_iterator_last(mp), map_iterator_compare);
+
+    key = 15, value = 15;
+    map_insert(mp, key, value);
+
+    map_iterator_next(mp, it);
+    ASSERT_NE_CMP(it, map_iterator_first(mp), map_iterator_compare);
+    ASSERT_EQ_CMP(it, map_iterator_last(mp), map_iterator_compare);
+
+
+    /* ... */
+
+    
+    ASSERT_EQ(map_iterator_get_key(map_iterator_first(mp),int), 5);
+    ASSERT_EQ(map_iterator_get_key(map_iterator_last(mp),int), 15);
+
+    key = 20, value = 20;
+    map_insert(mp, key, value);
+
+    ASSERT_EQ(map_iterator_get_key(map_iterator_first(mp),int), 5);
+    ASSERT_EQ(map_iterator_get_key(map_iterator_last(mp),int), 20);
+
+    map_erase(mp, map_iterator_last(mp));
+
+    ASSERT_EQ(map_iterator_get_key(map_iterator_first(mp),int), 5);
+    ASSERT_EQ(map_iterator_get_key(map_iterator_last(mp),int), 15);
+
+    key = 1, value = 1;
+    map_insert(mp, key, value);
+
+    ASSERT_EQ(map_iterator_get_key(map_iterator_first(mp),int), 1);
+    ASSERT_EQ(map_iterator_get_key(map_iterator_last(mp),int), 15);
+
+    map_erase(mp, map_iterator_first(mp));
+
+    ASSERT_EQ(map_iterator_get_key(map_iterator_first(mp),int), 5);
+    ASSERT_EQ(map_iterator_get_key(map_iterator_last(mp),int), 15);
+
+    size_t mp_size = map_size(mp);
+    for (size_t i = 0; i < mp_size; ++i) 
+    /* Очищаем контейнер (альтернативный способ - map_clear(mp)) */
+    {
+        map_erase(mp, map_iterator_first(mp));
+    }
+
+    ASSERT_EQ_CMP(map_iterator_first(mp), map_iterator_end(mp), map_iterator_compare);
+    ASSERT_EQ_CMP(map_iterator_last(mp), map_iterator_end(mp), map_iterator_compare);
+    ASSERT_EQ_CMP(map_iterator_end(mp), map_iterator_end(mp), map_iterator_compare);
+
+    key = 100, value = 100;
+    map_insert(mp, key, value);
+
+    ASSERT_EQ(map_iterator_get_key(map_iterator_first(mp),int), 100);
+    ASSERT_EQ(map_iterator_get_key(map_iterator_last(mp),int), 100);
+    ASSERT_NE_CMP(map_iterator_first(mp), map_iterator_end(mp), map_iterator_compare);
+    ASSERT_NE_CMP(map_iterator_last(mp), map_iterator_end(mp), map_iterator_compare);
+
+    map_free(mp);
 }
 
 /*****************************************************************************/
@@ -208,6 +294,7 @@ C_TEST(insert_small_rotates_test)
 C_TEST_SUITE(all_tests)
 {
     C_RUN_TEST(insert_small_rotates_test);
+    C_RUN_TEST(iterator_test);  
 }
 
 int main(int argc, char *argv[])

@@ -90,7 +90,7 @@ map_free
  * 
  * Принимает в качестве аргумента указатель на контейнер map
  */
-inline size_t 
+ size_t 
 map_size
 (
     map *mp
@@ -101,7 +101,7 @@ map_size
  * 
  * Принимает в качестве аргумента указатель на контейнер map
  */
-inline bool
+ bool
 map_empty
 (
     map *mp
@@ -125,15 +125,29 @@ _map_insert
 );
 
 /**
- * Удаляет из контейнера map элемент, принадлежащий итератору
+ * Удаляет из контейнера map элемент, принадлежащий итератору, с вызовом 
+ * пользовательских удалителей (если они есть)
  * 
  * Принимает в качестве аргументов указатель на контейнер map и итератор
  */
-void 
-map_erase
+#define map_erase(mp,iter) _map_erase(mp, iter, true)
+
+/**
+ * Удаляет из контейнера map элемент, принадлежащий итератору, без вызова 
+ * пользовательских удалителей для ключа и значения
+ * 
+ * Ответственность за очистку ресурсов перекладывается на разработчика
+ * 
+ * Принимает в качестве аргументов указатель на контейнер map и итератор
+ */
+#define map_steal(mp,iter) _map_erase(mp, iter, false)
+
+void
+_map_erase
 (
     map *           mp, 
-    map_iterator    iter
+    map_iterator    iter,
+    bool            use_deleters
 );
 
 /**
@@ -167,10 +181,10 @@ _map_iterator_next
  * Принимает в качестве аргументов указатель на контейнер map и итератор
  * 
  * Если мы имеем итератор map_iterator it, удовлетворяющий условию
- * map_iterator_equal(iter, map_iterator_end(mp)) == true
+ * map_iterator_compare(iter, map_iterator_end(mp)) == 0
  * и вызовем функцию map_iterator_prev(mp,it), то итератор будет содержать
- * последний элемент контейнера и условие
- * map_iterator_equal(iter, map_iterator_last(mp)) станет истинным
+ * последний элемент контейнера и тогда результат вызова функции
+ * map_iterator_compare(iter, map_iterator_last(mp)) будет равен 0
  * (при условии, что дерево не пустое)
  */
 #define map_iterator_prev(mp,iter) _map_iterator_prev(mp,&iter)
@@ -185,10 +199,14 @@ _map_iterator_prev
 /**
  * Сравнивает два итератора и возвращает результат их сравнения
  * 
+ * Если first == second, функция возвращает 0, иначе 1
+ * Да, это немного странно, но сделано так для сохранения однородности
+ * с остальными функциями сравнения (по типу strcmp из string.h)
+ * 
  * Принимает в качестве аргументов два итератора
  */
-bool 
-map_iterator_equal
+ int 
+map_iterator_compare
 (
     map_iterator first, 
     map_iterator second
@@ -197,7 +215,7 @@ map_iterator_equal
 /**
  * Выполняет поиск элемента с ключом key в контейнере map и возвращает итератор, 
  * содержащий элемент с ключом key 
- * Если элемент не найден, то map_iterator_equal(iter, map_iterator_end(mp)) == true
+ * Если элемент не найден, то map_iterator_compare(iter, map_iterator_end(mp)) == 0
  * 
  * Принимает в качестве аргументов указатель на контейнер map и ключ key
  * key должен быть lvalue (иметь адрес)
@@ -213,12 +231,12 @@ _map_find
 
 /**
  * Возвращает итератор, содержащий первый элемент контейнера
- * Если контейнер пуст, условие
- * map_iterator_equal(iter, map_iterator_end(mp)) будет истинным
+ * Если контейнер пуст, результат вызова функции
+ * map_iterator_compare(iter, map_iterator_end(mp)) будет равен 0
  * 
  * Принимает в качестве аргумента указатель на контейнер map
  */
-map_iterator 
+ map_iterator 
 map_iterator_first
 (
     map *mp
@@ -226,12 +244,12 @@ map_iterator_first
 
 /**
  * Возвращает итератор, содержащий последний элемент контейнера
- * Если контейнер пуст, условие
- * map_iterator_equal(iter, map_iterator_end(mp)) будет истинным
+ * Если контейнер пуст, результат вызова функции
+ * map_iterator_compare(iter, map_iterator_end(mp)) будет равен нулю
  * 
  * Принимает в качестве аргумента указатель на контейнер map
  */
-map_iterator 
+ map_iterator 
 map_iterator_last
 (
     map *mp
@@ -243,7 +261,7 @@ map_iterator_last
  * 
  * Принимает в качестве аргумента указатель на контейнер map
  */
-map_iterator 
+ map_iterator 
 map_iterator_end
 (
     map *mp
@@ -258,7 +276,7 @@ map_iterator_end
  */
 #define map_iterator_get_key(iter,type) (*(type *)_map_iterator_get_key(iter))
 
-void *
+ void *
 _map_iterator_get_key
 (
     map_iterator iter
@@ -273,7 +291,7 @@ _map_iterator_get_key
  */
 #define map_iterator_get_value(iter,type) (*(type *)_map_iterator_get_value(iter))
 
-void *
+ void *
 _map_iterator_get_value
 (
     map_iterator iter

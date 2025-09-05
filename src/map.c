@@ -178,7 +178,8 @@ static avl_node *
 map_erase_case_no_children
 (
     map *         mp, 
-    avl_node *    node
+    avl_node *    node,
+    bool          use_deleters
 );
 
 /**
@@ -191,7 +192,8 @@ static avl_node *
 map_erase_case_one_children
 (
     map *         mp, 
-    avl_node *    node
+    avl_node *    node,
+    bool          use_deleters
 );
 
 /**
@@ -210,7 +212,8 @@ static avl_node *
 map_erase_case_two_children
 (
     map *         mp, 
-    avl_node *    node
+    avl_node *    node,
+    bool          use_deleters
 );
 
 /**
@@ -324,7 +327,7 @@ map_free
     free(mp);
 }
 
-inline size_t 
+ size_t 
 map_size
 (
     map *mp
@@ -339,7 +342,7 @@ map_size
     return mp->size;
 }
 
-inline bool
+ bool
 map_empty
 (
     map *mp
@@ -434,10 +437,11 @@ _map_insert
 }
 
 void 
-map_erase
+_map_erase
 (
     map *           mp, 
-    map_iterator    iter
+    map_iterator    iter,
+    bool            use_deleters
 )
 {
     if (mp == NULL)
@@ -450,12 +454,12 @@ map_erase
     map_iterator_impl input_iter_impl = *(map_iterator_impl *)&iter;
 
     map_iterator find_elem = _map_find(mp, ((avl_node *)(input_iter_impl.this_node))->key);
-    if (map_iterator_equal(find_elem, map_iterator_end(mp))) 
+    if (map_iterator_compare(find_elem, map_iterator_end(mp)) == 0) 
     {
         fprintf(stderr, "map_erase: итератор iter не принадлежит контейнеру\n");
         exit(EXIT_FAILURE);
     }
-    else if (!map_iterator_equal(iter, find_elem))
+    else if (map_iterator_compare(iter, find_elem) != 0)
     {
         fprintf(stderr, "map_erase: итератор iter не принадлежит контейнеру\n");
         exit(EXIT_FAILURE);   
@@ -470,13 +474,13 @@ map_erase
     avl_node *parent;
 
     if (erase_node->left_child == NULL && erase_node->right_child == NULL) {
-        parent = map_erase_case_no_children(mp, erase_node);
+        parent = map_erase_case_no_children(mp, erase_node, use_deleters);
     }  
     else if (erase_node->left_child != NULL && erase_node->right_child != NULL) {
-        parent = map_erase_case_two_children(mp, erase_node);
+        parent = map_erase_case_two_children(mp, erase_node, use_deleters);
     }                                         
     else {
-        parent = map_erase_case_one_children(mp, erase_node);
+        parent = map_erase_case_one_children(mp, erase_node, use_deleters);
     }       
     
     (mp->size)--;
@@ -524,10 +528,10 @@ _map_iterator_next
     map_iterator_impl *implementation_of_iter = (map_iterator_impl *)iter;
     avl_node *curr_node = (avl_node *)(implementation_of_iter->this_node);
 
-    if (map_iterator_equal(*iter, map_iterator_last(mp))) {
+    if (map_iterator_compare(*iter, map_iterator_last(mp)) == 0) {
         curr_node = (avl_node *)((void *)(&(mp->header)));
     }
-    else if (map_iterator_equal(*iter, map_iterator_end(mp))) 
+    else if (map_iterator_compare(*iter, map_iterator_end(mp)) == 0) 
     {
         fprintf(stderr, "map_iterator_next_elem: произведена попытка выйти за границы контейнера\n");
         exit(EXIT_FAILURE);
@@ -566,10 +570,10 @@ _map_iterator_prev
     map_iterator_impl *implementation_of_iter = (map_iterator_impl *)iter;
     avl_node *curr_node = implementation_of_iter->this_node;
 
-    if (map_iterator_equal(*iter, map_iterator_end(mp))) {
+    if (map_iterator_compare(*iter, map_iterator_end(mp)) == 0) {
         curr_node = mp->header.most_right;
     }
-    else if (map_iterator_equal(*iter, map_iterator_first(mp))) 
+    else if (map_iterator_compare(*iter, map_iterator_first(mp)) == 0) 
     {
         fprintf(stderr, "map_iterator_prev: произведена попытка выйти за границы контейнера\n");
         exit(EXIT_FAILURE);
@@ -592,8 +596,8 @@ _map_iterator_prev
     implementation_of_iter->this_node = curr_node;
 }
 
-bool 
-map_iterator_equal
+ int 
+map_iterator_compare
 (
     map_iterator f, 
     map_iterator s
@@ -602,8 +606,8 @@ map_iterator_equal
     map_iterator_impl iter_impl_f = *(map_iterator_impl *)&f;
     map_iterator_impl iter_impl_s = *(map_iterator_impl *)&s;
 
-    return (iter_impl_f.this_map == iter_impl_s.this_map
-        && iter_impl_f.this_node == iter_impl_s.this_node);
+    return (!(iter_impl_f.this_map == iter_impl_s.this_map
+        && iter_impl_f.this_node == iter_impl_s.this_node));
 }
 
 map_iterator 
@@ -643,7 +647,7 @@ _map_find
     return *(map_iterator *)&iter_impl;
 }
 
-map_iterator 
+ map_iterator 
 map_iterator_first
 (
     map *mp
@@ -663,7 +667,7 @@ map_iterator_first
     return *((map_iterator *)&iter_impl);
 }
 
-map_iterator 
+ map_iterator 
 map_iterator_last
 (
     map *mp
@@ -683,7 +687,7 @@ map_iterator_last
     return *((map_iterator *)&iter_impl);
 }
 
-map_iterator 
+ map_iterator 
 map_iterator_end
 (
     map *mp
@@ -700,7 +704,7 @@ map_iterator_end
 }
 
 
-void *
+ void *
 _map_iterator_get_key
 (
     map_iterator iter
@@ -711,7 +715,7 @@ _map_iterator_get_key
     return ((avl_node *)(iter_impl.this_node))->key;
 }
 
-void *
+ void *
 _map_iterator_get_value
 (
     map_iterator iter
@@ -990,7 +994,8 @@ static avl_node *
 map_erase_case_no_children
 (
     map *         mp, 
-    avl_node *    node
+    avl_node *    node,
+    bool          use_deleters
 )
 {       
     avl_node *parent = node->parent;
@@ -1015,6 +1020,16 @@ map_erase_case_no_children
         mp->header.most_right = NULL;
     }
 
+    if (use_deleters)
+    {
+        if (mp->key_destroyer != NULL) {
+            mp->key_destroyer(node->key);                
+        }
+        if (mp->value_destroyer != NULL) {
+            mp->value_destroyer(node->value);
+        }   
+    }
+
     free(node->key);
     free(node->value);
     free(node);
@@ -1026,7 +1041,8 @@ static avl_node *
 map_erase_case_one_children
 (
     map *         mp, 
-    avl_node *    node
+    avl_node *    node,
+    bool          use_deleters
 )
 {
     avl_node *parent = node->parent;    
@@ -1078,6 +1094,16 @@ map_erase_case_one_children
         }
     }
 
+    if (use_deleters)
+    {
+        if (mp->key_destroyer != NULL) {
+            mp->key_destroyer(node->key);                
+        }
+        if (mp->value_destroyer != NULL) {
+            mp->value_destroyer(node->value);
+        }   
+    }
+    
     free(node->key);
     free(node->value);
     free(node);
@@ -1089,7 +1115,8 @@ static avl_node *
 map_erase_case_two_children
 (
     map *         mp, 
-    avl_node *    node
+    avl_node *    node,
+    bool          use_deleters
 )
 {       
     avl_node *parent;
@@ -1109,10 +1136,10 @@ map_erase_case_two_children
     node->value = temp_node_value;
 
     if (replacement->right_child == NULL && replacement->left_child == NULL) {
-        parent = map_erase_case_no_children(mp, replacement);
+        parent = map_erase_case_no_children(mp, replacement, use_deleters);
     }
     else {
-        parent = map_erase_case_one_children(mp, replacement);
+        parent = map_erase_case_one_children(mp, replacement, use_deleters);
     }
 
     return parent;
@@ -1183,12 +1210,12 @@ map_free_helper
         map_free_helper(mp, node->right_child);
     }
 
-    if (mp->key_destroyer != NULL && mp->key_destroyer != free) {
+    if (mp->key_destroyer != NULL) {
         mp->key_destroyer(node->key);                
     }
     free(node->key);
 
-    if (mp->value_destroyer != NULL && mp->value_destroyer != free) {
+    if (mp->value_destroyer != NULL) {
         mp->value_destroyer(node->value);
     }
     free(node->value);

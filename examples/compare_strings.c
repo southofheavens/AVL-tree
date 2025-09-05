@@ -22,8 +22,7 @@ char *create_str(const char *str)
 
 void key_deleter(void *k)
 {
-    char *str = *((char **)k);
-    free(str);
+    PTR_DELETER(char *, free, k);
 }
 
 int main(int argc, char *argv[])
