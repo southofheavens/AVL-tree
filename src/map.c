@@ -327,7 +327,7 @@ map_free
     free(mp);
 }
 
- size_t 
+size_t 
 map_size
 (
     map *mp
@@ -342,7 +342,7 @@ map_size
     return mp->size;
 }
 
- bool
+bool
 map_empty
 (
     map *mp
@@ -503,13 +503,10 @@ map_clear
         map_free_helper(mp, mp->header.root);
     }    
 
-    *mp = (map) 
-    {
-        .header.root = NULL,
-        .header.most_left = NULL,
-        .header.most_right = NULL,
-        .size = 0
-    };
+    mp->header.root = NULL;
+    mp->header.most_left = NULL;
+    mp->header.most_right = NULL;
+    mp->size = 0;
 }
 
 void 
@@ -596,7 +593,7 @@ _map_iterator_prev
     implementation_of_iter->this_node = curr_node;
 }
 
- int 
+int 
 map_iterator_compare
 (
     map_iterator f, 
@@ -647,7 +644,7 @@ _map_find
     return *(map_iterator *)&iter_impl;
 }
 
- map_iterator 
+map_iterator 
 map_iterator_first
 (
     map *mp
@@ -667,7 +664,7 @@ map_iterator_first
     return *((map_iterator *)&iter_impl);
 }
 
- map_iterator 
+map_iterator 
 map_iterator_last
 (
     map *mp
@@ -687,7 +684,7 @@ map_iterator_last
     return *((map_iterator *)&iter_impl);
 }
 
- map_iterator 
+map_iterator 
 map_iterator_end
 (
     map *mp
@@ -704,7 +701,7 @@ map_iterator_end
 }
 
 
- void *
+void *
 _map_iterator_get_key
 (
     map_iterator iter
@@ -715,7 +712,7 @@ _map_iterator_get_key
     return ((avl_node *)(iter_impl.this_node))->key;
 }
 
- void *
+void *
 _map_iterator_get_value
 (
     map_iterator iter

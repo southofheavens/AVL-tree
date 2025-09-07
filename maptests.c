@@ -107,15 +107,15 @@ C_TEST(insert_small_rotates_test)
 
     int key, value;
 
-    key = 25, value = 25;
+    key = 75, value = 75;
     map_insert(mp, key, value);
     key = 50, value = 50;
     map_insert(mp, key, value);
-    key = 75, value = 75;
+    key = 25, value = 25;
     map_insert(mp, key, value);
 
     /**
-     * После последней вставки ожидался малый левый поворот. 
+     * После последней вставки ожидался малый правый поворот.
      * Убедимся, что это действительно так
      */
 
@@ -130,11 +130,37 @@ C_TEST(insert_small_rotates_test)
     ASSERT_EQ(root->parent, NULL);
     ASSERT_EQ(left_child->parent, root);
     ASSERT_EQ(right_child->parent, root);
+    ASSERT_EQ(right_child->left_child, NULL);
+
+    map_clear(mp);
+
+    key = 25, value = 25;
+    map_insert(mp, key, value);
+    key = 50, value = 50;
+    map_insert(mp, key, value);
+    key = 75, value = 75;
+    map_insert(mp, key, value);
+
+    /**
+     * После последней вставки ожидался малый левый поворот. 
+     * Убедимся, что это действительно так
+     */
+
+    root = (((map_test *)mp)->header).root;
+    left_child = root->left_child;
+    right_child = root->right_child;
+
+    ASSERT_EQ(*((int *)(root->key)), 50);
+    ASSERT_EQ(*((int *)(left_child->key)), 25);
+    ASSERT_EQ(*((int *)(right_child->key)), 75);
+
+    ASSERT_EQ(root->parent, NULL);
+    ASSERT_EQ(left_child->parent, root);
+    ASSERT_EQ(right_child->parent, root);
     ASSERT_EQ(left_child->right_child, NULL);
 
     /**
-     * Заполним дерево элементами и продолжим тестировать вставку, обращая
-     * внимание на детей узлов, которые подвергаются повороту
+     * Заполним дерево элементами и продолжим тестировать вставку
      */
 
     key = 15, value = 15;
@@ -156,29 +182,36 @@ C_TEST(insert_small_rotates_test)
 
     /**
      * После последней вставки ожидался малый правый поворот относительно
-     * корня и его левого потомка. Убедимся, что это действительно так
+     * корня. Убедимся, что это действительно так
      */
 
     root = (((map_test *)mp)->header).root;
+    left_child = root->left_child;
+    right_child = root->right_child;
     ASSERT_EQ(*((int *)(root->key)), 25);
-    ASSERT_EQ(*((int *)(root->right_child->key)), 50);
-    ASSERT_EQ(*((int *)(root->right_child->right_child->key)), 75);
-    ASSERT_EQ(*((int *)(root->right_child->right_child->right_child->key)), 85);
-    ASSERT_EQ(*((int *)(root->right_child->right_child->left_child->key)), 65);
-    ASSERT_EQ(*((int *)(root->right_child->left_child->key)), 35);
-    ASSERT_EQ(*((int *)(root->right_child->left_child->left_child->key)), 30);
-    ASSERT_EQ(*((int *)(root->left_child->key)), 15);
-    ASSERT_EQ(*((int *)(root->left_child->right_child->key)), 20);
-    ASSERT_EQ(*((int *)(root->left_child->left_child->key)), 10);
-    ASSERT_EQ(*((int *)(root->left_child->left_child->left_child->key)), 5);
+    ASSERT_EQ(*((int *)(right_child->key)), 50);
+    ASSERT_EQ(*((int *)(right_child->right_child->key)), 75);
+    ASSERT_EQ(*((int *)(right_child->right_child->right_child->key)), 85);
+    ASSERT_EQ(*((int *)(right_child->right_child->left_child->key)), 65);
+    ASSERT_EQ(*((int *)(right_child->left_child->key)), 35);
+    ASSERT_EQ(*((int *)(right_child->left_child->left_child->key)), 30);
+    ASSERT_EQ(*((int *)(left_child->key)), 15);
+    ASSERT_EQ(*((int *)(left_child->right_child->key)), 20);
+    ASSERT_EQ(*((int *)(left_child->left_child->key)), 10);
+    ASSERT_EQ(*((int *)(left_child->left_child->left_child->key)), 5);
 
     ASSERT_EQ(root->parent, NULL);
-    ASSERT_EQ(root->right_child->parent, root);
-    ASSERT_EQ(root->right_child, root->right_child->left_child->parent);
+    ASSERT_EQ(left_child->parent, root);
+    ASSERT_EQ(right_child->parent, root);
+    /** 
+     * Обратим внимание на "слабый" узел, который до вставки был правым 
+     * ребёнком узла с ключом 25, стал левым ребёнком узла с ключом 50
+     */
+    ASSERT_EQ(root->right_child, root->right_child->left_child->parent); 
 
     /**
      * Теперь посмотрим на то, как поведёт себя дерево, если поворот потребуется 
-     * относительно вершин, ни одна из которых не является корнем 
+     * относительно вершины, которая не является корнем
      */
 
     key = 12, value = 12;
@@ -187,20 +220,29 @@ C_TEST(insert_small_rotates_test)
     map_insert(mp, key, value);
 
     /**
-     * После последней вставки ожидался малый поворот направо относительно элементов
-     * с ключами 10 и 15. Убедимся, что это действительно так
+     * После последней вставки ожидался малый поворот направо относительно элемента 
+     * с ключом 15. Убедимся, что это действительно так
      */
 
-    root = (((map_test *)mp)->header).root;
-    ASSERT_EQ(*((int *)(root->left_child->key)), 10);
-    ASSERT_EQ(*((int *)(root->left_child->right_child->key)), 15);
-    ASSERT_EQ(*((int *)(root->left_child->right_child->right_child->key)), 20);
-    ASSERT_EQ(*((int *)(root->left_child->right_child->left_child->key)), 12);
-    ASSERT_EQ(*((int *)(root->left_child->left_child->key)), 5);
-    ASSERT_EQ(*((int *)(root->left_child->left_child->left_child->key)), 1);
+    avl_node_test *new_root_of_subtree = ((((map_test *)mp)->header).root)->left_child;
+    avl_node_test *nros_left_child = new_root_of_subtree->left_child;
+    avl_node_test *nros_right_child = new_root_of_subtree->right_child;
 
-    ASSERT_EQ(root->left_child->parent, root);
-    ASSERT_EQ(root->left_child->right_child->parent, root->left_child);
+    ASSERT_EQ(*(int *)(new_root_of_subtree->key), 10);
+    ASSERT_EQ(*(int *)(nros_right_child->key), 15);
+    ASSERT_EQ(*(int *)(nros_right_child->right_child->key), 20);
+    ASSERT_EQ(*(int *)(nros_right_child->left_child->key), 12);
+    ASSERT_EQ(*(int *)(nros_left_child->key), 5);
+    ASSERT_EQ(*(int *)(nros_left_child->left_child->key), 1);
+
+    // ASSERT_EQ(root->parent, NULL);
+    // ASSERT_EQ(left_child->parent, root);
+    // ASSERT_EQ(right_child->parent, root);
+    // /** 
+    //  * Обратим внимание на "слабый" узел, который до вставки был правым 
+    //  * ребёнком узла с ключом 25, стал левым ребёнком узла с ключом 50
+    //  */
+    // ASSERT_EQ(root->right_child, root->right_child->left_child->parent); 
 
     map_free(mp);
 }

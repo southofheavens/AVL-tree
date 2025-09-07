@@ -90,7 +90,7 @@ map_free
  * 
  * Принимает в качестве аргумента указатель на контейнер map
  */
- size_t 
+size_t 
 map_size
 (
     map *mp
@@ -101,7 +101,7 @@ map_size
  * 
  * Принимает в качестве аргумента указатель на контейнер map
  */
- bool
+bool
 map_empty
 (
     map *mp
@@ -205,7 +205,7 @@ _map_iterator_prev
  * 
  * Принимает в качестве аргументов два итератора
  */
- int 
+int 
 map_iterator_compare
 (
     map_iterator first, 
@@ -236,7 +236,7 @@ _map_find
  * 
  * Принимает в качестве аргумента указатель на контейнер map
  */
- map_iterator 
+map_iterator 
 map_iterator_first
 (
     map *mp
@@ -249,7 +249,7 @@ map_iterator_first
  * 
  * Принимает в качестве аргумента указатель на контейнер map
  */
- map_iterator 
+map_iterator 
 map_iterator_last
 (
     map *mp
@@ -261,7 +261,7 @@ map_iterator_last
  * 
  * Принимает в качестве аргумента указатель на контейнер map
  */
- map_iterator 
+map_iterator 
 map_iterator_end
 (
     map *mp
@@ -276,7 +276,7 @@ map_iterator_end
  */
 #define map_iterator_get_key(iter,type) (*(type *)_map_iterator_get_key(iter))
 
- void *
+void *
 _map_iterator_get_key
 (
     map_iterator iter
@@ -291,7 +291,7 @@ _map_iterator_get_key
  */
 #define map_iterator_get_value(iter,type) (*(type *)_map_iterator_get_value(iter))
 
- void *
+void *
 _map_iterator_get_value
 (
     map_iterator iter
